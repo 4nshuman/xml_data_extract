@@ -3,6 +3,11 @@ from lxml import etree
 import os
 from os.path import join, dirname, abspath
 
+def clean_string(node_str):
+    start_i = len('<author>')
+    last_i = node_str.find('</author>')
+    return node_str[start_i:last_i]
+
 def computations():
     global data_dict
     dir = os.listdir(join(dirname(dirname(abspath(__file__))), os.getcwd())) #GET THE LIST OF ALL XML FILES PRESENT IN THE DIRECTORY
@@ -14,23 +19,24 @@ def computations():
             doc = etree.parse(doc_name) #PARSE THE DOCUMENT INTO AN XML OBJECT
             root = doc.getroot() #GET THE ROOT OF THE CURRENT XML
             for nodes in root: #ITERATE THROUGH ALL THE SUB NODES IN THE ROOT NODE
-                if (nodes.tag != 'AccessRoles'): #IF THE TAG DOES NOT MATCH THE TAG OF THE NODE YOU ARE SEARCHING THEN BYPASS
+                if (nodes.tag != 'books_hardcopy'): #IF THE TAG DOES NOT MATCH THE TAG OF THE NODE YOU ARE SEARCHING THEN BYPASS
                     continue
                 else:
-                    access_roles=nodes
-                for accessrole in access_roles : #ONCE YOU GET YOUR NODE ITERATE WITHIN IT'S CHILDREN NODES
-                    for allow in accessrole: #TO UNDERSTAND THIS, SEE THE HEIRARCHY OF THE XMLS
-                        ad_group = allow.get('name') #GET THE NAME PROPERTY OF THE NODE
-                        if(ad_group and '.app.' in ad_group.lower()): #CHECK IF THE NAME IS NOT EMPTY AND DATA MATCHES OUR CRITERIA
-                            data_dict[doc_name][ad_group.upper()] = ad_group.upper()
+                    hard_copy_books=nodes
+                for book in hard_copy_books : #ONCE YOU GET YOUR NODE ITERATE WITHIN IT'S CHILDREN NODES
+                    book_id = book.get('id')
+                    for element in book: #TO UNDERSTAND THIS, SEE THE HEIRARCHY OF THE XMLS
+                        if(element.tag=='author'):
+                            author = clean_string(etree.tostring(element))
+                            data_dict[doc_name][book_id] = author
 
 def display():
     for data in data_dict.keys():
         print("****************************************************************")
         print("****************************************************************")
-        print("data for environment :" + data)
+        print("Data for file :" + data)
         for ad in data_dict[data]:
-            print(ad)
+            print(ad + " : " +data_dict[data][ad])
         print("****************************************************************")
         print("****************************************************************")
-        
+
